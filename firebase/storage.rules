@@ -1,0 +1,56 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function hasScope(scope) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'scopes' in request.auth.token
+        && scope in request.auth.token.scopes;
+    }
+    
+    function sameOrg(orgId) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'orgId' in request.auth.token
+        && request.auth.token.orgId == orgId;
+    }
+    
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+    
+    // Public files (read-only)
+    match /orgs/{orgId}/public/{allPaths=**} {
+      allow read: if true;
+      allow write: if sameOrg(orgId) && hasScope('admin.write');
+    }
+    
+    // HR documents (sensitive)
+    match /orgs/{orgId}/hr/{allPaths=**} {
+      allow read: if sameOrg(orgId) && (hasScope('hr.read') || hasScope('admin.read'));
+      allow write: if sameOrg(orgId) && (hasScope('hr.write') || hasScope('admin.write'));
+    }
+    
+    // Campaign assets
+    match /orgs/{orgId}/campaigns/{allPaths=**} {
+      allow read: if sameOrg(orgId) && hasScope('campaign.read');
+      allow write: if sameOrg(orgId) && hasScope('campaign.write');
+    }
+    
+    // Donor documents
+    match /orgs/{orgId}/donors/{donorId}/{allPaths=**} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('donor.read') ||
+        request.auth.token.donorId == donorId
+      );
+      allow write: if sameOrg(orgId) && hasScope('donor.write');
+    }
+  }
+}

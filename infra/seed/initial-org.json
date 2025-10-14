@@ -1,0 +1,118 @@
+{
+  "org": {
+    "name": "ADOPT A YOUNG PARENT",
+    "jurisdiction": "Michigan, USA",
+    "stateCorpId": "803297893",
+    "filingReceivedDate": "2024-11-08",
+    "filingEffectiveDate": "2024-11-19",
+    "filingNumber": "224860800370",
+    "transparency": {
+      "publicPoliciesUrls": [],
+      "charitableRegistrationStatus": "Registered to solicit in MI (see AG Charitable Trust)",
+      "googleAdGrants": false
+    },
+    "tax": {
+      "ein": "<ADD_EIN>",
+      "status501c3": "PENDING",
+      "deductibility": "Contributions may be tax-deductible to the extent allowed by law."
+    },
+    "contact": {
+      "legalAddress": "<ORG LEGAL ADDRESS>",
+      "emailSupport": "support@adoptayoungparent.org",
+      "phone": "<ORG PHONE>",
+      "website": "https://adoptayoungparent.org"
+    },
+    "branding": {
+      "primaryColor": "#0ea5e9",
+      "accentColor": "#a855f7",
+      "logoUrl": "<ADD_LOGO_URL>",
+      "faviconUrl": "<ADD_FAVICON_URL>"
+    },
+    "integrations": {
+      "zeffy": {
+        "enabled": true,
+        "formId": "<ZEFFY_FORM_ID>"
+      },
+      "stripe": {
+        "enabled": true,
+        "publishableKey": "<STRIPE_PUBLISHABLE_KEY>"
+      },
+      "fcm": {
+        "enabled": true,
+        "vapidPublicKey": "<VAPID_PUBLIC_KEY>"
+      }
+    },
+    "createdAt": "2024-11-19T00:00:00Z",
+    "updatedAt": "2024-11-19T00:00:00Z"
+  },
+  "roles": [
+    {
+      "id": "admin",
+      "name": "Administrator",
+      "description": "Full system access",
+      "scopes": [
+        "admin.read",
+        "admin.write",
+        "crm.read",
+        "crm.write",
+        "donor.read",
+        "donor.write",
+        "campaign.read",
+        "campaign.write",
+        "finance.read",
+        "finance.write",
+        "hr.read",
+        "hr.write"
+      ]
+    },
+    {
+      "id": "manager",
+      "name": "Manager",
+      "description": "Campaign and team management",
+      "scopes": [
+        "campaign.read",
+        "campaign.write",
+        "crm.read",
+        "crm.write",
+        "donor.read"
+      ]
+    },
+    {
+      "id": "fundraiser",
+      "name": "Fundraiser",
+      "description": "Fundraising and donor engagement",
+      "scopes": [
+        "campaign.read",
+        "donor.read",
+        "crm.read"
+      ]
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "description": "Financial reporting and reconciliation",
+      "scopes": [
+        "finance.read",
+        "finance.write",
+        "donor.read"
+      ]
+    },
+    {
+      "id": "hr",
+      "name": "Human Resources",
+      "description": "Employee and HR management",
+      "scopes": [
+        "hr.read",
+        "hr.write"
+      ]
+    },
+    {
+      "id": "donor",
+      "name": "Donor",
+      "description": "Donor portal access",
+      "scopes": [
+        "donor.read"
+      ]
+    }
+  ]
+}

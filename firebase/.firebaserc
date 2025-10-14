@@ -1,0 +1,10 @@
+{
+  "projects": {
+    "default": "adopt-a-young-parent",
+    "dev": "adopt-a-young-parent-dev",
+    "staging": "adopt-a-young-parent-staging",
+    "prod": "adopt-a-young-parent"
+  },
+  "targets": {},
+  "etags": {}
+}

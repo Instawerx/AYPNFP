@@ -1,0 +1,312 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================
+    // HELPER FUNCTIONS
+    // ========================================
+
+    // Check if user has a specific scope
+    function hasScope(scope) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'scopes' in request.auth.token
+        && scope in request.auth.token.scopes;
+    }
+
+    // Check if user belongs to the same org as the document
+    function sameOrg(orgId) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'orgId' in request.auth.token
+        && request.auth.token.orgId == orgId;
+    }
+
+    // Check if document belongs to user's org
+    function sameOrgDoc(resource) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'orgId' in request.auth.token
+        && resource.data.orgId == request.auth.token.orgId;
+    }
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if request is from a Cloud Function
+    function isFunction() {
+      return request.auth != null
+        && request.auth.token != null
+        && 'isFunction' in request.auth.token
+        && request.auth.token.isFunction == true;
+    }
+
+    // Check if user is accessing their own donor record
+    function isOwnDonorRecord(donorId) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'donorId' in request.auth.token
+        && request.auth.token.donorId == donorId;
+    }
+
+    // Check if user is accessing their own employee record
+    function isOwnEmployeeRecord(employeeId) {
+      return request.auth != null
+        && request.auth.token != null
+        && 'employeeId' in request.auth.token
+        && request.auth.token.employeeId == employeeId;
+    }
+
+    // ========================================
+    // DEFAULT DENY
+    // ========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ========================================
+    // ORGANIZATION SETTINGS
+    // ========================================
+    match /orgs/{orgId}/settings/{docId} {
+      allow read: if sameOrg(orgId) && hasScope('admin.read');
+      allow write: if sameOrg(orgId) && hasScope('admin.write');
+    }
+
+    // ========================================
+    // PUBLIC CONTENT (read-only)
+    // ========================================
+    match /orgs/{orgId}/public/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ========================================
+    // ROLES
+    // ========================================
+    match /orgs/{orgId}/roles/{roleId} {
+      allow read: if sameOrg(orgId) && hasScope('admin.read');
+      allow write: if sameOrg(orgId) && hasScope('admin.write');
+    }
+
+    // ========================================
+    // USERS
+    // ========================================
+    match /orgs/{orgId}/users/{userId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('admin.read') ||
+        hasScope('crm.read') ||
+        request.auth.uid == userId
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('admin.write') ||
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'scopes', 'orgId']))
+      );
+    }
+
+    // ========================================
+    // DONORS
+    // ========================================
+    match /orgs/{orgId}/donors/{donorId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('donor.read') ||
+        hasScope('crm.read') ||
+        hasScope('campaign.read') ||
+        isOwnDonorRecord(donorId)
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('donor.write') ||
+        hasScope('crm.write') ||
+        (isOwnDonorRecord(donorId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'lifetime', 'stats']))
+      );
+
+      // Donor devices (FCM tokens)
+      match /devices/{deviceId} {
+        allow read: if sameOrg(orgId) && (
+          hasScope('donor.read') ||
+          isOwnDonorRecord(donorId)
+        );
+        allow create: if sameOrg(orgId) && (
+          hasScope('donor.write') ||
+          isOwnDonorRecord(donorId)
+        );
+        allow update, delete: if sameOrg(orgId) && (
+          hasScope('donor.write') ||
+          isOwnDonorRecord(donorId)
+        );
+      }
+    }
+
+    // ========================================
+    // DONATIONS (webhook/function writes only)
+    // ========================================
+    match /orgs/{orgId}/donations/{donationId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('finance.read') ||
+        hasScope('donor.read') ||
+        hasScope('campaign.read')
+      );
+      // Client writes are BLOCKED - only Cloud Functions can write
+      allow create, update, delete: if isFunction() && sameOrg(orgId);
+    }
+
+    // ========================================
+    // RECEIPTS
+    // ========================================
+    match /orgs/{orgId}/receipts/{receiptId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('finance.read') ||
+        hasScope('donor.read')
+      );
+      // Only functions can create receipts
+      allow create: if isFunction() && sameOrg(orgId);
+      allow update, delete: if false;
+    }
+
+    // ========================================
+    // PLEDGES
+    // ========================================
+    match /orgs/{orgId}/pledges/{pledgeId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('donor.read')
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('campaign.write') ||
+        hasScope('donor.write')
+      );
+    }
+
+    // ========================================
+    // CAMPAIGNS
+    // ========================================
+    match /orgs/{orgId}/campaigns/{campaignId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('admin.read')
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('campaign.write') ||
+        hasScope('admin.write')
+      );
+    }
+
+    // ========================================
+    // FUNDRAISERS
+    // ========================================
+    match /orgs/{orgId}/fundraisers/{fundraiserId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('admin.read') ||
+        request.auth.uid == fundraiserId
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('campaign.write') ||
+        hasScope('admin.write')
+      );
+    }
+
+    // ========================================
+    // TASKS
+    // ========================================
+    match /orgs/{orgId}/tasks/{taskId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('admin.read') ||
+        resource.data.assignedTo == request.auth.uid
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('campaign.write') ||
+        hasScope('admin.write')
+      );
+    }
+
+    // ========================================
+    // EMPLOYEES (HR-sensitive)
+    // ========================================
+    match /orgs/{orgId}/employees/{employeeId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('hr.read') ||
+        hasScope('admin.read') ||
+        isOwnEmployeeRecord(employeeId)
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('hr.write') ||
+        hasScope('admin.write')
+      );
+    }
+
+    // ========================================
+    // EVENTS
+    // ========================================
+    match /orgs/{orgId}/events/{eventId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('admin.read')
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('campaign.write') ||
+        hasScope('admin.write')
+      );
+
+      // Event tickets
+      match /tickets/{ticketId} {
+        allow read: if sameOrg(orgId) && (
+          hasScope('campaign.read') ||
+          hasScope('finance.read')
+        );
+        allow write: if sameOrg(orgId) && hasScope('campaign.write');
+      }
+    }
+
+    // ========================================
+    // NOTES (entity-linked)
+    // ========================================
+    match /orgs/{orgId}/notes/{noteId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('crm.read') ||
+        hasScope('campaign.read')
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('crm.write') ||
+        hasScope('campaign.write')
+      );
+    }
+
+    // ========================================
+    // COMMUNICATIONS LOG
+    // ========================================
+    match /orgs/{orgId}/communications/{commId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('admin.read')
+      );
+      // Only functions can write communication logs
+      allow create: if isFunction() && sameOrg(orgId);
+      allow update, delete: if false;
+    }
+
+    // ========================================
+    // AUDIT LOGS (immutable, write-only by functions)
+    // ========================================
+    match /orgs/{orgId}/auditLogs/{logId} {
+      // NO CLIENT READS - audit logs are for compliance/investigation only
+      allow read: if false;
+      // Only Cloud Functions can create audit logs
+      allow create: if isFunction() && sameOrg(orgId);
+      // Audit logs are immutable
+      allow update, delete: if false;
+    }
+
+    // ========================================
+    // GAME SCORES (skill-only mini-games)
+    // ========================================
+    match /orgs/{orgId}/gameScores/{scoreId} {
+      allow read: if sameOrg(orgId);
+      // Only functions can write scores (anti-cheat)
+      allow create: if isFunction() && sameOrg(orgId);
+      allow update, delete: if false;
+    }
+  }
+}
