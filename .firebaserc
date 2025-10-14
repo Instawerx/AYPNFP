@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "your-firebase-project-id",
+    "production": "adopt-a-young-parent"
+  },
+  "targets": {},
+  "etags": {}
+}

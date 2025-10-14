@@ -16,7 +16,7 @@ export { dailyMetricsRollup } from "./scheduled/metrics";
 export { monthlyReports } from "./scheduled/reports";
 
 // Export auth triggers
-export { onUserCreated, onUserDeleted } from "./auth/triggers";
+export { onUserCreated } from "./auth/triggers";
 
 // Export airSlate functions
 export { generateForm990HTTP, processForm990Completion } from "./airslate/form990";

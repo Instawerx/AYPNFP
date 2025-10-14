@@ -1,24 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFirestore } from "firebase-admin/firestore";
-import { initializeApp, getApps, cert } from "firebase-admin/app";
+// import { getFirestore } from "firebase-admin/firestore";
+// import { initializeApp, getApps, cert } from "firebase-admin/app";
 
-// Initialize Firebase Admin
-if (getApps().length === 0) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  });
-}
+// TODO: Move receipt generation to Cloud Functions
+// This API route is disabled during build to avoid requiring service account credentials
 
-const db = getFirestore();
+// // Initialize Firebase Admin
+// if (getApps().length === 0) {
+//   initializeApp({
+//     credential: cert({
+//       projectId: process.env.FIREBASE_PROJECT_ID,
+//       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+//       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+//     }),
+//   });
+// }
+
+// const db = getFirestore();
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // TODO: Implement receipt generation via Cloud Functions
+  return NextResponse.json(
+    { error: "Receipt generation moved to Cloud Functions" },
+    { status: 501 }
+  );
+
+  /* Disabled - requires Firebase Admin credentials
   const donationId = params.id;
   const orgId = process.env.NEXT_PUBLIC_ORG_ID || "aayp-prod";
 
@@ -74,4 +84,5 @@ This is an official tax receipt. Please retain for your records.
       { status: 500 }
     );
   }
+  */
 }

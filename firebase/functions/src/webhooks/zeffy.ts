@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions/v2/https";
+import * as functionsV1 from "firebase-functions";
 import * as admin from "firebase-admin";
 import { writeDonationAndReceipt } from "../services/receipts";
 import { logAudit } from "../services/audit";
@@ -31,24 +32,25 @@ import { logAudit } from "../services/audit";
 export const zeffyWebhook = functions.onRequest(
   {
     cors: false,
-    secrets: ["ZEFFY_WEBHOOK_SECRET"],
   },
   async (req, res) => {
     // Verify webhook signature (if Zeffy supports it)
     // For now, we'll use a shared secret in headers
-    const webhookSecret = process.env.ZEFFY_WEBHOOK_SECRET;
+    const webhookSecret = process.env.ZEFFY_WEBHOOK_SECRET || functionsV1.config().zeffy?.webhook_secret;
     const signature = req.headers["x-zeffy-signature"] as string;
 
     if (webhookSecret && signature !== webhookSecret) {
       console.error("Invalid Zeffy webhook signature");
-      return res.status(401).send("Unauthorized");
+      res.status(401).send("Unauthorized");
+      return;
     }
 
     // Parse webhook payload
     const event = req.body;
     if (!event || !event.data) {
       console.error("Invalid Zeffy webhook payload");
-      return res.status(400).send("Bad payload");
+      res.status(400).send("Bad payload");
+      return;
     }
 
     const orgId = process.env.DEFAULT_ORG_ID!;
@@ -67,7 +69,8 @@ export const zeffyWebhook = functions.onRequest(
 
     if (!id || !amount || !donor) {
       console.error("Missing required fields in Zeffy webhook");
-      return res.status(400).send("Missing required fields");
+      res.status(400).send("Missing required fields");
+      return;
     }
 
     try {
@@ -82,7 +85,8 @@ export const zeffyWebhook = functions.onRequest(
       const existingDonation = await donationRef.get();
       if (existingDonation.exists) {
         console.log(`Donation ${id} already processed`);
-        return res.status(200).send("OK");
+        res.status(200).send("OK");
+        return;
       }
 
       // Write donation document
@@ -122,9 +126,11 @@ export const zeffyWebhook = functions.onRequest(
 
       console.log(`Zeffy donation ${id} processed successfully`);
       res.status(200).send("OK");
+      return;
     } catch (error) {
       console.error("Error processing Zeffy webhook:", error);
       res.status(500).send("Internal server error");
+      return;
     }
   }
 );

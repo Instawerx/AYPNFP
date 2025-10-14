@@ -17,10 +17,11 @@ export const submitGameScore = functions.onCall(
       throw new functions.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-    const { orgId, fundraiserId } = auth.token as {
+    const token = auth.token as unknown as {
       orgId: string;
       fundraiserId?: string;
     };
+    const { orgId, fundraiserId } = token;
 
     const { gameId, score, metadata = {} } = data;
 

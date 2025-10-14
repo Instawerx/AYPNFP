@@ -56,6 +56,8 @@ export default function DocumentsPage() {
 
   const loadDocuments = async () => {
     try {
+      if (!user) return;
+      
       const orgId = claims.orgId;
 
       const docsSnap = await getDocs(

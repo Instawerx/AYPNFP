@@ -161,7 +161,8 @@ export const notifyDonor = functions.onCall(
       throw new functions.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-    const { orgId, scopes } = auth.token as { orgId: string; scopes: string[] };
+    const token = auth.token as unknown as { orgId: string; scopes: string[] };
+    const { orgId, scopes } = token;
 
     // Check scope
     if (!scopes.includes("campaign.write")) {

@@ -49,17 +49,17 @@ export const monthlyReports = functions.onSchedule(
         const donations = donationsSnap.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        })) as Array<{ id: string; amount?: number; fees?: number; net?: number; source?: string }>;
 
         const totalAmount = donations.reduce(
-          (sum, d) => sum + (d.amount || 0),
+          (sum: number, d) => sum + (d.amount || 0),
           0
         );
-        const totalFees = donations.reduce((sum, d) => sum + (d.fees || 0), 0);
-        const totalNet = donations.reduce((sum, d) => sum + (d.net || 0), 0);
+        const totalFees = donations.reduce((sum: number, d) => sum + (d.fees || 0), 0);
+        const totalNet = donations.reduce((sum: number, d) => sum + (d.net || 0), 0);
 
         // Group by source
-        const bySource = donations.reduce((acc: any, d) => {
+        const bySource = donations.reduce((acc: Record<string, { count: number; total: number }>, d) => {
           const source = d.source || "Unknown";
           if (!acc[source]) {
             acc[source] = { count: 0, total: 0 };

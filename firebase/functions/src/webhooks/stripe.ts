@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions/v2/https";
+import * as functionsV1 from "firebase-functions";
 import Stripe from "stripe";
 import * as admin from "firebase-admin";
 import { writeDonationAndReceipt } from "../services/receipts";
@@ -11,19 +12,20 @@ import { logAudit } from "../services/audit";
 export const stripeWebhook = functions.onRequest(
   {
     cors: false,
-    secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
   },
   async (req, res) => {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY!;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+    // TODO: Set these as Firebase Secrets via: firebase functions:secrets:set STRIPE_SECRET_KEY
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || functionsV1.config().stripe?.secret_key;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || functionsV1.config().stripe?.webhook_secret;
 
     if (!stripeSecretKey || !webhookSecret) {
       console.error("Missing Stripe configuration");
-      return res.status(500).send("Server configuration error");
+      res.status(500).send("Server configuration error");
+      return;
     }
 
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2024-06-20",
+      apiVersion: "2023-10-16",
     });
 
     // Verify webhook signature
@@ -38,7 +40,8 @@ export const stripeWebhook = functions.onRequest(
       );
     } catch (err: any) {
       console.error("Stripe webhook signature verification failed:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
     }
 
     const orgId = process.env.DEFAULT_ORG_ID!;
@@ -68,7 +71,8 @@ export const stripeWebhook = functions.onRequest(
         const existingDonation = await donationRef.get();
         if (existingDonation.exists) {
           console.log(`Donation ${id} already processed`);
-          return res.json({ received: true });
+          res.json({ received: true });
+          return;
         }
 
         // Fetch balance transaction for accurate fees
@@ -129,10 +133,12 @@ export const stripeWebhook = functions.onRequest(
         console.log(`Stripe donation ${id} processed successfully`);
       } catch (error) {
         console.error("Error processing Stripe webhook:", error);
-        return res.status(500).send("Internal server error");
+        res.status(500).send("Internal server error");
+        return;
       }
     }
 
     res.json({ received: true });
+    return;
   }
 );

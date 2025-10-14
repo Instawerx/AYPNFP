@@ -58,19 +58,28 @@ export class AirSlateService {
   }
 
   /**
-   * Get new access token from airSlate
+   * Get new access token from airSlate using API Password grant
    */
   private async refreshAccessToken(): Promise<string> {
     try {
+      // Using API Password grant type (more secure for user-based access)
+      const config = functions.config().airslate;
+      
+      const params = new URLSearchParams();
+      params.append('grant_type', 'api_password');
+      params.append('client_id', this.config.clientId);
+      params.append('client_secret', this.config.clientSecret);
+      params.append('username', config.username);
+      params.append('password', config.password);
+      params.append('scope', 'openid email profile');
+
       const response = await axios.post(
-        `${AIRSLATE_API_BASE}/oauth/token`,
+        'https://oauth.airslate.com/public/oauth/token',
+        params,
         {
-          grant_type: 'client_credentials',
-          client_id: this.config.clientId,
-          client_secret: this.config.clientSecret,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         }
       );
 
@@ -86,10 +95,11 @@ export class AirSlateService {
         updatedAt: admin.firestore.Timestamp.now(),
       });
 
+      console.log('✅ airSlate token refreshed successfully');
       return access_token;
     } catch (error: any) {
-      console.error('Error refreshing airSlate token:', error.response?.data || error);
-      throw new Error('Failed to authenticate with airSlate');
+      console.error('❌ Error refreshing airSlate token:', error.response?.data || error);
+      throw new Error(`Failed to authenticate with airSlate: ${error.response?.data?.error_description || error.message}`);
     }
   }
 

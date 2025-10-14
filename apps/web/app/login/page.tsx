@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signInWithGoogle, signInWithApple, signInWithMicrosoft } from "@/lib/auth";
-import { Mail, Lock, Chrome, Apple, MicrosoftIcon } from "lucide-react";
+import { Mail, Lock, Chrome, Apple } from "lucide-react";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const router = useRouter();

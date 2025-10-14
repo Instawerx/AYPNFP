@@ -154,11 +154,11 @@ export async function generateYearEndStatement({
   const donations = donationsSnap.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })) as Array<{ id: string; amount?: number; fmv?: number }>;
 
-  const totalAmount = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+  const totalAmount = donations.reduce((sum: number, d) => sum + (d.amount || 0), 0);
   const totalDeductible = donations.reduce(
-    (sum, d) => sum + (d.amount - (d.fmv || 0)),
+    (sum: number, d) => sum + ((d.amount || 0) - (d.fmv || 0)),
     0
   );
 
