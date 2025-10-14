@@ -60,5 +60,18 @@
       "enabled": true,
       "port": 4000
     }
-  }
+  },
+  "apphosting": [
+    {
+      "backendId": "aaypnfp",
+      "rootDir": "apps/web",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ]
 }

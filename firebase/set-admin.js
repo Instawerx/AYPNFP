@@ -11,8 +11,10 @@
 
 const admin = require('firebase-admin');
 
-// Initialize Firebase Admin (uses default credentials)
-admin.initializeApp();
+// Initialize Firebase Admin with project ID
+admin.initializeApp({
+  projectId: 'adopt-a-young-parent'
+});
 
 async function setAdminClaims(uid) {
   try {
@@ -70,7 +72,7 @@ async function setAdminClaims(uid) {
 
 // ⚠️ REPLACE THIS WITH YOUR USER UID FROM FIREBASE CONSOLE
 // Get it from: https://console.firebase.google.com/project/adopt-a-young-parent/authentication/users
-const YOUR_USER_UID = 'PASTE_YOUR_UID_HERE';
+const YOUR_USER_UID = 'PEifeIQuhHbAE34XoFOfZFrSJHt1';
 
 // Validate UID
 if (YOUR_USER_UID === 'PASTE_YOUR_UID_HERE') {

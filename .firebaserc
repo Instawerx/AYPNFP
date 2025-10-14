@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "your-firebase-project-id",
+    "default": "adopt-a-young-parent",
     "production": "adopt-a-young-parent"
   },
   "targets": {},
