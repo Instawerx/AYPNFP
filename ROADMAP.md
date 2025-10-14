@@ -64,10 +64,10 @@ Oct 2024          Nov 2024          Dec 2024          Jan 2025          Feb 2025
 ---
 
 ### 🔨 **Phase 1: Core Portals** (IN PROGRESS)
-**Status:** 78% Complete  
-**Duration:** Oct 13 - Oct 18, 2024  
+**Status:** 85% Complete  
+**Duration:** Oct 13 - Oct 16, 2024  
 **Sprints:** 4-7
-**Last Updated:** Oct 13, 2024, 11:01 PM
+**Last Updated:** Oct 13, 2024, 11:12 PM
 
 #### Features:
 - 🟢 **Admin Portal** (Sprint 6) - 85% Complete
@@ -77,12 +77,13 @@ Oct 2024          Nov 2024          Dec 2024          Jan 2025          Feb 2025
   - Audit log viewer
   - User management
 
-- 🟡 **Manager Portal** (Sprint 7) - 15% Complete
+- 🟡 **Manager Portal** (Sprint 7) - 40% Complete
   - ✅ Dashboard with campaign overview
   - ✅ Team performance metrics
   - ✅ Top performer highlight
-  - ⚪ Campaign pipeline view
-  - ⚪ Team leaderboards (detailed)
+  - ✅ Campaigns list (search, filter, grid)
+  - ✅ Team leaderboard (rankings, podium)
+  - ⚪ Campaign detail page
   - ⚪ Task queue dashboard
   - ⚪ UTM analytics tracking
 
@@ -106,12 +107,13 @@ Oct 2024          Nov 2024          Dec 2024          Jan 2025          Feb 2025
   - ⚪ Board pack generator
   - ⚪ Stripe/Zeffy integration pages
 
-- ⚪ **Employee Portal** (Sprint 10)
-  - Onboarding checklist
-  - HR document vault
-  - Training modules
-  - Time-off requests
-  - Employee directory
+- 🟡 **Employee Portal** (Sprint 10) - 60% Complete
+  - ✅ Dashboard with onboarding progress
+  - ✅ Onboarding checklist (8 tasks)
+  - ✅ HR document vault (upload, categorize)
+  - ✅ Time-off requests (balance, history)
+  - ⚪ Training modules
+  - ⚪ Employee directory
 
 ---
 

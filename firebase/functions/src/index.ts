@@ -17,3 +17,8 @@ export { monthlyReports } from "./scheduled/reports";
 
 // Export auth triggers
 export { onUserCreated, onUserDeleted } from "./auth/triggers";
+
+// Export airSlate functions
+export { generateForm990HTTP, processForm990Completion } from "./airslate/form990";
+export { generateFinancialStatements } from "./airslate/financials";
+export { generateBoardPack } from "./airslate/boardpack";

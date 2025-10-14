@@ -308,5 +308,53 @@ service cloud.firestore {
       allow create: if isFunction() && sameOrg(orgId);
       allow update, delete: if false;
     }
+
+    // ========================================
+    // AIRSLATE WORKFLOWS
+    // ========================================
+    match /orgs/{orgId}/airslate_workflows/{workflowId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('finance.read') ||
+        hasScope('admin.read')
+      );
+      allow write: if sameOrg(orgId) && (
+        hasScope('finance.write') ||
+        hasScope('admin.write')
+      );
+    }
+
+    // ========================================
+    // AIRSLATE DOCUMENTS
+    // ========================================
+    match /orgs/{orgId}/airslate_documents/{documentId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('finance.read') ||
+        hasScope('admin.read')
+      );
+      // Only functions can create/update documents
+      allow create, update: if isFunction() && sameOrg(orgId);
+      allow delete: if sameOrg(orgId) && hasScope('admin.write');
+    }
+
+    // ========================================
+    // AIRSLATE TOKENS (function-only access)
+    // ========================================
+    match /airslate_tokens/{tokenId} {
+      // Only functions can read/write tokens
+      allow read, write: if isFunction();
+    }
+
+    // ========================================
+    // NOTIFICATIONS
+    // ========================================
+    match /orgs/{orgId}/notifications/{notificationId} {
+      allow read: if sameOrg(orgId) && (
+        hasScope('campaign.read') ||
+        hasScope('admin.read')
+      );
+      // Only functions can create notifications
+      allow create: if isFunction() && sameOrg(orgId);
+      allow update, delete: if false;
+    }
   }
 }
