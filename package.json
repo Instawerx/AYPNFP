@@ -1,5 +1,42 @@
 {
+  "name": "adopt-a-young-parent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nonprofit management platform for ADOPT A YOUNG PARENT",
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web && npm run build --workspace=firebase/functions",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:functions": "npm run build --workspace=firebase/functions",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "deploy": "cd firebase && firebase deploy",
+    "deploy:hosting": "cd firebase && firebase deploy --only hosting",
+    "deploy:functions": "cd firebase && firebase deploy --only functions",
+    "deploy:rules": "cd firebase && firebase deploy --only firestore:rules,storage:rules",
+    "emulators": "cd firebase && firebase emulators:start"
+  },
+  "workspaces": [
+    "apps/web",
+    "firebase/functions"
+  ],
+  "keywords": [
+    "nonprofit",
+    "firebase",
+    "nextjs",
+    "fundraising",
+    "crm"
+  ],
+  "author": "ADOPT A YOUNG PARENT",
+  "license": "UNLICENSED",
   "dependencies": {
     "firebase": "^12.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   }
 }
