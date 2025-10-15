@@ -2,32 +2,55 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn, signInWithGoogle, signInWithApple, signInWithMicrosoft } from "@/lib/auth";
-import { Mail, Lock, Chrome, Apple } from "lucide-react";
+import { signUp, signInWithGoogle, signInWithApple, signInWithMicrosoft } from "@/lib/auth";
+import { Mail, Lock, Chrome, Apple, User } from "lucide-react";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Validation
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      await signUp(email, password);
+      // Redirect to donor portal after successful signup
       router.push("/portal/donor");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in");
+      if (err.code === "auth/email-already-in-use") {
+        setError("This email is already registered. Please sign in instead.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Invalid email address");
+      } else if (err.code === "auth/weak-password") {
+        setError("Password is too weak. Please use a stronger password.");
+      } else {
+        setError(err.message || "Failed to create account");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignUp = async () => {
     setError("");
     setLoading(true);
 
@@ -35,13 +58,13 @@ export default function LoginPage() {
       await signInWithGoogle();
       router.push("/portal/donor");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+      setError(err.message || "Failed to sign up with Google");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAppleLogin = async () => {
+  const handleAppleSignUp = async () => {
     setError("");
     setLoading(true);
 
@@ -49,13 +72,13 @@ export default function LoginPage() {
       await signInWithApple();
       router.push("/portal/donor");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Apple");
+      setError(err.message || "Failed to sign up with Apple");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMicrosoftLogin = async () => {
+  const handleMicrosoftSignUp = async () => {
     setError("");
     setLoading(true);
 
@@ -63,7 +86,7 @@ export default function LoginPage() {
       await signInWithMicrosoft();
       router.push("/portal/donor");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Microsoft");
+      setError(err.message || "Failed to sign up with Microsoft");
     } finally {
       setLoading(false);
     }
@@ -74,8 +97,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to your account</p>
+            <h1 className="text-3xl font-bold mb-2">Create Account</h1>
+            <p className="text-muted-foreground">Join ADOPT A YOUNG PARENT</p>
           </div>
 
           {error && (
@@ -84,7 +107,25 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleEmailLogin} className="space-y-4 mb-6">
+          <form onSubmit={handleEmailSignUp} className="space-y-4 mb-6">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
                 Email
@@ -117,6 +158,29 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="••••••••"
                   required
+                  minLength={6}
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Must be at least 6 characters
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
                 />
               </div>
             </div>
@@ -126,7 +190,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible-ring"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
 
@@ -141,7 +205,7 @@ export default function LoginPage() {
 
           <div className="space-y-3">
             <button
-              onClick={handleGoogleLogin}
+              onClick={handleGoogleSignUp}
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 py-3 border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible-ring"
             >
@@ -150,7 +214,7 @@ export default function LoginPage() {
             </button>
 
             <button
-              onClick={handleAppleLogin}
+              onClick={handleAppleSignUp}
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 py-3 border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible-ring"
             >
@@ -159,7 +223,7 @@ export default function LoginPage() {
             </button>
 
             <button
-              onClick={handleMicrosoftLogin}
+              onClick={handleMicrosoftSignUp}
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 py-3 border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible-ring"
             >
@@ -171,9 +235,9 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <a href="/signup" className="text-primary font-semibold hover:underline">
-              Sign up
+            Already have an account?{" "}
+            <a href="/login" className="text-primary font-semibold hover:underline">
+              Sign in
             </a>
           </p>
         </div>

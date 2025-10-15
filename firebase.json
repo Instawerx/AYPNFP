@@ -3,8 +3,10 @@
     "public": "public",
     "ignore": [
       "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
+      ".firebaserc",
+      ".gitignore",
+      "**/node_modules/**",
+      "**/*.log"
     ],
     "headers": [
       {
@@ -64,7 +66,6 @@
   "apphosting": [
     {
       "backendId": "aaypnfp",
-      "rootDir": "apps/web",
       "ignore": [
         "node_modules",
         ".git",

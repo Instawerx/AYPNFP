@@ -21,9 +21,7 @@ import {
   Briefcase
 } from "lucide-react";
 
-// Force dynamic rendering for all portal pages
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Client component - no exports needed
 
 interface UserClaims {
   role?: string;

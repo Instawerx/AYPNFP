@@ -158,6 +158,62 @@
         { "fieldPath": "fundraiserId", "order": "ASCENDING" },
         { "fieldPath": "sentAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "auditLogs",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" },
+        { "fieldPath": "actorId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditLogs",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" },
+        { "fieldPath": "action", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditLogs",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" },
+        { "fieldPath": "category", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditLogs",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" },
+        { "fieldPath": "resourceType", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditLogs",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "resource", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "formSubmissions",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "formSubmissions",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

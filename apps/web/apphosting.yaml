@@ -1,5 +1,6 @@
 # Settings for Backend (on Cloud Run).
 # See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+
 runConfig:
   minInstances: 0
   maxInstances: 100
@@ -64,3 +65,46 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  
+  # Firebase Admin SDK (for API routes)
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: firebase-adminsdk-fbsvc@adopt-a-young-parent.iam.gserviceaccount.com
+    availability:
+      - RUNTIME
+  
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: firebase-admin-private-key
+    availability:
+      - RUNTIME
+  
+  # SendGrid Email Service (Optional - for email notifications)
+  # Create secret: firebase apphosting:secrets:set sendgrid-api-key
+  - variable: SENDGRID_API_KEY
+    secret: sendgrid-api-key
+    availability:
+      - RUNTIME
+  
+  - variable: SENDGRID_FROM_EMAIL
+    value: vrdivebar@gmail.com
+    availability:
+      - RUNTIME
+  
+  - variable: SENDGRID_FROM_NAME
+    value: AYPNFP
+    availability:
+      - RUNTIME
+  
+  # airSlate Integration (Optional - uses mock mode if not set)
+  # Create secret: firebase apphosting:secrets:set airslate-api-key
+  # - variable: AIRSLATE_API_KEY
+  #   secret: airslate-api-key
+  
+  # - variable: AIRSLATE_ORG_ID
+  #   value: your-airslate-org-id
+  #   availability:
+  #     - RUNTIME
+  
+  # - variable: AIRSLATE_BASE_URL
+  #   value: https://api.airslate.com/v1
+  #   availability:
+  #     - RUNTIME

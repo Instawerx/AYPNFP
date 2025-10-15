@@ -30,6 +30,7 @@
   "author": "ADOPT A YOUNG PARENT",
   "license": "UNLICENSED",
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "firebase": "^12.4.0"
   },
   "devDependencies": {
