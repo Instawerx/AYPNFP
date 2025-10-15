@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 
-const db = getAdminDb();
-
 // POST - Create new role
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +25,7 @@ export async function POST(request: NextRequest) {
     // TODO: Verify requesting user has admin.write scope
 
     // Check if role name already exists
+    const db = getAdminDb();
     const rolesCollection = db.collection(`orgs/${orgId}/roles`);
     const existingRoles = await rolesCollection.where("name", "==", name).get();
 
@@ -80,6 +79,7 @@ export async function GET(request: NextRequest) {
 
     // TODO: Verify requesting user has admin.read scope
 
+    const db = getAdminDb();
     const rolesSnap = await db.collection(`orgs/${orgId}/roles`).get();
     const roles = rolesSnap.docs.map((doc) => ({
       id: doc.id,

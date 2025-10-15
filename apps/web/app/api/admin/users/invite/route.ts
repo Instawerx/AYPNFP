@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 
-const db = getAdminDb();
-
 export async function POST(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { email, displayName, roles, sendEmail, orgId } = body;
 

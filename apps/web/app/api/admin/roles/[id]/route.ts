@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 
-const db = getAdminDb();
-
 // GET - Get role details
 export async function GET(
   request: NextRequest,
@@ -16,6 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Missing orgId" }, { status: 400 });
     }
 
+    const db = getAdminDb();
     const roleRef = db.collection(`orgs/${orgId}/roles`).doc(params.id);
     const roleDoc = await roleRef.get();
 
@@ -44,6 +43,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { name, description, scopes, orgId } = body;
 
@@ -170,6 +170,7 @@ export async function DELETE(
     // TODO: Verify requesting user has admin.write scope
 
     // Check if any users have this role
+    const db = getAdminDb();
     const usersSnap = await db.collection(`orgs/${orgId}/users`).get();
     const usersWithRole = usersSnap.docs.filter((doc) =>
       doc.data().roles?.includes(params.id)

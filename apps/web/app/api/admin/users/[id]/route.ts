@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 
-const db = getAdminDb();
-
 // GET - Get user details
 export async function GET(
   request: NextRequest,
@@ -16,6 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Missing orgId" }, { status: 400 });
     }
 
+    const db = getAdminDb();
     const userRef = db.collection(`orgs/${orgId}/users`).doc(params.id);
     const userDoc = await userRef.get();
 
@@ -42,6 +41,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { displayName, roles, status, orgId } = body;
 
@@ -129,6 +129,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { orgId } = body;
 
