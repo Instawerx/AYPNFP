@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 import { getAirSlateClient } from "@/lib/airslate";
 
-const db = getAdminDb();
-
 // GET - List all form templates
 export async function GET(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const { searchParams } = new URL(request.url);
     const orgId = searchParams.get("orgId");
     const syncWithAirSlate = searchParams.get("sync") === "true";
@@ -83,6 +82,7 @@ export async function GET(request: NextRequest) {
 // POST - Create new form template
 export async function POST(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const {
       name,

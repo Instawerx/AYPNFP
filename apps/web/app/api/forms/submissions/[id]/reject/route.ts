@@ -4,13 +4,12 @@ import { sendRejectionNotification } from "@/lib/email";
 import { logFormAction } from "@/lib/audit";
 import { trackFormRejection, calculateProcessingTime } from "@/lib/analytics";
 
-const db = getAdminDb();
-
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { reason, comments, rejectedBy, rejectorName, rejectorEmail, orgId } = body;
     const submissionId = params.id;

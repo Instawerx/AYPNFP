@@ -4,13 +4,12 @@ import { sendApprovalNotification } from "@/lib/email";
 import { logFormAction } from "@/lib/audit";
 import { trackFormApproval, calculateProcessingTime } from "@/lib/analytics";
 
-const db = getAdminDb();
-
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { comments, approvedBy, approverName, approverEmail, orgId } = body;
     const submissionId = params.id;

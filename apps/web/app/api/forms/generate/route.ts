@@ -6,10 +6,9 @@ import { sendFormSubmissionNotification } from "@/lib/email";
 import { logFormAction } from "@/lib/audit";
 import { trackFormSubmission } from "@/lib/analytics";
 
-const db = getAdminDb();
-
 export async function POST(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { templateId, fields, metadata, orgId } = body;
 
