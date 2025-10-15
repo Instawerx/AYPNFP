@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { getAdminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
+
+const db = getAdminDb();
 
 // GET - Get user details
 export async function GET(
@@ -16,9 +16,10 @@ export async function GET(
       return NextResponse.json({ error: "Missing orgId" }, { status: 400 });
     }
 
-    const userDoc = await getDoc(doc(db, `orgs/${orgId}/users`, params.id));
+    const userRef = db.collection(`orgs/${orgId}/users`).doc(params.id);
+    const userDoc = await userRef.get();
 
-    if (!userDoc.exists()) {
+    if (!userDoc.exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -51,8 +52,9 @@ export async function PATCH(
     // TODO: Verify requesting user has admin.write scope
 
     // Get current user data
-    const userDoc = await getDoc(doc(db, `orgs/${orgId}/users`, params.id));
-    if (!userDoc.exists()) {
+    const userRef = db.collection(`orgs/${orgId}/users`).doc(params.id);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -60,9 +62,12 @@ export async function PATCH(
     const scopes: string[] = [];
     if (roles && Array.isArray(roles)) {
       for (const roleId of roles) {
-        const roleDoc = await getDoc(doc(db, `orgs/${orgId}/roles`, roleId));
-        if (roleDoc.exists()) {
-          const roleData = roleDoc.data();
+        const roleDoc = await db
+          .collection(`orgs/${orgId}/roles`)
+          .doc(roleId)
+          .get();
+        if (roleDoc.exists) {
+          const roleData = roleDoc.data() || {};
           if (roleData.scopes) {
             scopes.push(...roleData.scopes);
           }
@@ -92,8 +97,8 @@ export async function PATCH(
     }
 
     // Update Firestore document
-    const updateData: any = {
-      updatedAt: serverTimestamp(),
+    const updateData: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+      updatedAt: AdminFieldValue.serverTimestamp(),
     };
 
     if (displayName !== undefined) updateData.displayName = displayName;
@@ -103,7 +108,7 @@ export async function PATCH(
     }
     if (status !== undefined) updateData.status = status;
 
-    await updateDoc(doc(db, `orgs/${orgId}/users`, params.id), updateData);
+    await userRef.update(updateData);
 
     return NextResponse.json({
       success: true,
@@ -147,7 +152,7 @@ export async function DELETE(
 
     // Delete from Firestore
     try {
-      await deleteDoc(doc(db, `orgs/${orgId}/users`, params.id));
+      await db.collection(`orgs/${orgId}/users`).doc(params.id).delete();
     } catch (error: any) {
       console.error("Error deleting user document:", error);
       return NextResponse.json(

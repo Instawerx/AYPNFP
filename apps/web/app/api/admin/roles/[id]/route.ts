@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from "firebase/firestore";
-import { getAdminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
+
+const db = getAdminDb();
 
 // GET - Get role details
 export async function GET(
@@ -26,15 +16,18 @@ export async function GET(
       return NextResponse.json({ error: "Missing orgId" }, { status: 400 });
     }
 
-    const roleDoc = await getDoc(doc(db, `orgs/${orgId}/roles`, params.id));
+    const roleRef = db.collection(`orgs/${orgId}/roles`).doc(params.id);
+    const roleDoc = await roleRef.get();
 
-    if (!roleDoc.exists()) {
+    if (!roleDoc.exists) {
       return NextResponse.json({ error: "Role not found" }, { status: 404 });
     }
 
+    const roleData = roleDoc.data();
+
     return NextResponse.json({
       id: roleDoc.id,
-      ...roleDoc.data(),
+      ...roleData,
     });
   } catch (error: any) {
     console.error("Error getting role:", error);
@@ -61,19 +54,20 @@ export async function PATCH(
     // TODO: Verify requesting user has admin.write scope
 
     // Get current role data
-    const roleDoc = await getDoc(doc(db, `orgs/${orgId}/roles`, params.id));
-    if (!roleDoc.exists()) {
+    const roleRef = db.collection(`orgs/${orgId}/roles`).doc(params.id);
+    const roleDoc = await roleRef.get();
+    if (!roleDoc.exists) {
       return NextResponse.json({ error: "Role not found" }, { status: 404 });
     }
 
     // Check if name is being changed and if it conflicts
-    if (name && name !== roleDoc.data().name) {
-      const existingRoles = await getDocs(
-        query(
-          collection(db, `orgs/${orgId}/roles`),
-          where("name", "==", name)
-        )
-      );
+    const currentData = roleDoc.data();
+
+    if (name && name !== currentData?.name) {
+      const existingRoles = await db
+        .collection(`orgs/${orgId}/roles`)
+        .where("name", "==", name)
+        .get();
 
       if (!existingRoles.empty) {
         return NextResponse.json(
@@ -84,8 +78,8 @@ export async function PATCH(
     }
 
     // Update role document
-    const updateData: any = {
-      updatedAt: serverTimestamp(),
+    const updateData: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
+      updatedAt: AdminFieldValue.serverTimestamp(),
     };
 
     if (name !== undefined) updateData.name = name.trim();
@@ -100,12 +94,12 @@ export async function PATCH(
       updateData.scopes = scopes;
     }
 
-    await updateDoc(doc(db, `orgs/${orgId}/roles`, params.id), updateData);
+    await roleRef.update(updateData);
 
     // If scopes changed, update all users with this role
     if (scopes !== undefined) {
       try {
-        const usersSnap = await getDocs(collection(db, `orgs/${orgId}/users`));
+        const usersSnap = await db.collection(`orgs/${orgId}/users`).get();
         const adminAuth = getAdminAuth();
 
         for (const userDoc of usersSnap.docs) {
@@ -114,9 +108,12 @@ export async function PATCH(
             // Recalculate user's aggregated scopes
             const userScopes: string[] = [];
             for (const roleId of userData.roles) {
-              const roleData = await getDoc(doc(db, `orgs/${orgId}/roles`, roleId));
-              if (roleData.exists()) {
-                const roleScopes = roleData.data().scopes || [];
+              const roleData = await db
+                .collection(`orgs/${orgId}/roles`)
+                .doc(roleId)
+                .get();
+              if (roleData.exists) {
+                const roleScopes = roleData.data()?.scopes || [];
                 userScopes.push(...roleScopes);
               }
             }
@@ -132,9 +129,9 @@ export async function PATCH(
             });
 
             // Update Firestore document
-            await updateDoc(doc(db, `orgs/${orgId}/users`, userDoc.id), {
+            await db.collection(`orgs/${orgId}/users`).doc(userDoc.id).update({
               scopes: uniqueScopes,
-              updatedAt: serverTimestamp(),
+              updatedAt: AdminFieldValue.serverTimestamp(),
             });
           }
         }
@@ -173,7 +170,7 @@ export async function DELETE(
     // TODO: Verify requesting user has admin.write scope
 
     // Check if any users have this role
-    const usersSnap = await getDocs(collection(db, `orgs/${orgId}/users`));
+    const usersSnap = await db.collection(`orgs/${orgId}/users`).get();
     const usersWithRole = usersSnap.docs.filter((doc) =>
       doc.data().roles?.includes(params.id)
     );
@@ -188,7 +185,7 @@ export async function DELETE(
     }
 
     // Delete role document
-    await deleteDoc(doc(db, `orgs/${orgId}/roles`, params.id));
+    await db.collection(`orgs/${orgId}/roles`).doc(params.id).delete();
 
     return NextResponse.json({
       success: true,

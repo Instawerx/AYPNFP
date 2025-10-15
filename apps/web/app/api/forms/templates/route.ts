@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 import { getAirSlateClient } from "@/lib/airslate";
+
+const db = getAdminDb();
 
 // GET - List all form templates
 export async function GET(request: NextRequest) {
@@ -24,18 +25,14 @@ export async function GET(request: NextRequest) {
 
         // Update Firestore with latest templates
         for (const template of airslateTemplates) {
-          // Check if template exists
-          const templatesSnap = await getDocs(
-            collection(db, `orgs/${orgId}/formTemplates`)
-          );
-          
-          const existingTemplate = templatesSnap.docs.find(
-            doc => doc.data().airslateTemplateId === template.id
-          );
+          const templatesCollection = db.collection(`orgs/${orgId}/formTemplates`);
+          const templatesSnap = await templatesCollection
+            .where("airslateTemplateId", "==", template.id)
+            .limit(1)
+            .get();
 
-          if (!existingTemplate) {
-            // Create new template
-            await addDoc(collection(db, `orgs/${orgId}/formTemplates`), {
+          if (templatesSnap.empty) {
+            await templatesCollection.add({
               name: template.name,
               description: template.description || "",
               category: "other",
@@ -48,9 +45,9 @@ export async function GET(request: NextRequest) {
                 approvers: [],
               },
               metadata: {
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                lastSyncedAt: serverTimestamp(),
+                createdAt: AdminFieldValue.serverTimestamp(),
+                updatedAt: AdminFieldValue.serverTimestamp(),
+                lastSyncedAt: AdminFieldValue.serverTimestamp(),
                 useCount: 0,
               },
             });
@@ -63,12 +60,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get templates from Firestore
-    const templatesSnap = await getDocs(
-      query(
-        collection(db, `orgs/${orgId}/formTemplates`),
-        orderBy("metadata.createdAt", "desc")
-      )
-    );
+    const templatesSnap = await db
+      .collection(`orgs/${orgId}/formTemplates`)
+      .orderBy("metadata.createdAt", "desc")
+      .get();
 
     const templates = templatesSnap.docs.map((doc) => ({
       id: doc.id,
@@ -108,6 +103,8 @@ export async function POST(request: NextRequest) {
 
     // TODO: Verify requesting user has forms.write scope
 
+    const templatesCollection = db.collection(`orgs/${orgId}/formTemplates`);
+
     const templateData = {
       name,
       description: description || "",
@@ -121,18 +118,15 @@ export async function POST(request: NextRequest) {
         approvers: [],
       },
       metadata: {
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: AdminFieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
         createdBy: "admin", // TODO: Get from auth context
-        lastSyncedAt: airslateTemplateId ? serverTimestamp() : null,
+        lastSyncedAt: airslateTemplateId ? AdminFieldValue.serverTimestamp() : null,
         useCount: 0,
       },
     };
 
-    const templateRef = await addDoc(
-      collection(db, `orgs/${orgId}/formTemplates`),
-      templateData
-    );
+    const templateRef = await templatesCollection.add(templateData);
 
     return NextResponse.json(
       {

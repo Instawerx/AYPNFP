@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment } from "firebase/firestore";
+import { getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 import { getAirSlateClient } from "@/lib/airslate";
 import { storeAirSlateDocument } from "@/lib/storage";
 import { sendFormSubmissionNotification } from "@/lib/email";
 import { logFormAction } from "@/lib/audit";
 import { trackFormSubmission } from "@/lib/analytics";
+
+const db = getAdminDb();
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,11 +23,12 @@ export async function POST(request: NextRequest) {
     // TODO: Verify requesting user has forms.submit scope
 
     // Get template from Firestore
-    const templateDoc = await getDoc(
-      doc(db, `orgs/${orgId}/formTemplates`, templateId)
-    );
+    const templateRef = db
+      .collection(`orgs/${orgId}/formTemplates`)
+      .doc(templateId);
+    const templateDoc = await templateRef.get();
 
-    if (!templateDoc.exists()) {
+    if (!templateDoc.exists) {
       return NextResponse.json(
         { error: "Template not found" },
         { status: 404 }
@@ -34,6 +36,13 @@ export async function POST(request: NextRequest) {
     }
 
     const templateData = templateDoc.data();
+
+    if (!templateData) {
+      return NextResponse.json(
+        { error: "Template data unavailable" },
+        { status: 500 }
+      );
+    }
 
     // Validate required fields
     const requiredFields = templateData.fields.filter((f: any) => f.required);
@@ -103,6 +112,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create submission record in Firestore
+    const submissionsCollection = db.collection(`orgs/${orgId}/formSubmissions`);
+
     const submissionData = {
       templateId,
       templateName: templateData.name,
@@ -112,7 +123,7 @@ export async function POST(request: NextRequest) {
         email: metadata?.email || "unknown",
         displayName: metadata?.displayName || "Unknown User",
       },
-      submittedAt: serverTimestamp(),
+      submittedAt: AdminFieldValue.serverTimestamp(),
       status: "pending",
       fields,
       document: airslateDocument
@@ -121,7 +132,7 @@ export async function POST(request: NextRequest) {
             storagePath,
             airslateDownloadUrl: downloadUrl,
             downloadUrl: firebaseStorageUrl || downloadUrl,
-            generatedAt: serverTimestamp(),
+            generatedAt: AdminFieldValue.serverTimestamp(),
           }
         : null,
       routing: {
@@ -137,15 +148,12 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const submissionRef = await addDoc(
-      collection(db, `orgs/${orgId}/formSubmissions`),
-      submissionData
-    );
+    const submissionRef = await submissionsCollection.add(submissionData);
 
     // Increment template use count
-    await updateDoc(doc(db, `orgs/${orgId}/formTemplates`, templateId), {
-      "metadata.useCount": increment(1),
-      "metadata.updatedAt": serverTimestamp(),
+    await templateRef.update({
+      "metadata.useCount": AdminFieldValue.increment(1),
+      "metadata.updatedAt": AdminFieldValue.serverTimestamp(),
     });
 
     // Send notification to approvers

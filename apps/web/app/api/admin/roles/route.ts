@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
+import { getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
+
+const db = getAdminDb();
 
 // POST - Create new role
 export async function POST(request: NextRequest) {
@@ -26,12 +27,8 @@ export async function POST(request: NextRequest) {
     // TODO: Verify requesting user has admin.write scope
 
     // Check if role name already exists
-    const existingRoles = await getDocs(
-      query(
-        collection(db, `orgs/${orgId}/roles`),
-        where("name", "==", name)
-      )
-    );
+    const rolesCollection = db.collection(`orgs/${orgId}/roles`);
+    const existingRoles = await rolesCollection.where("name", "==", name).get();
 
     if (!existingRoles.empty) {
       return NextResponse.json(
@@ -45,17 +42,14 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       description: description?.trim() || "",
       scopes,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: AdminFieldValue.serverTimestamp(),
+      updatedAt: AdminFieldValue.serverTimestamp(),
       metadata: {
         createdBy: "admin", // TODO: Get from auth context
       },
     };
 
-    const roleRef = await addDoc(
-      collection(db, `orgs/${orgId}/roles`),
-      roleData
-    );
+    const roleRef = await rolesCollection.add(roleData);
 
     return NextResponse.json(
       {
@@ -86,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     // TODO: Verify requesting user has admin.read scope
 
-    const rolesSnap = await getDocs(collection(db, `orgs/${orgId}/roles`));
+    const rolesSnap = await db.collection(`orgs/${orgId}/roles`).get();
     const roles = rolesSnap.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),

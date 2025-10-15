@@ -7,8 +7,10 @@
 
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getAuth, Auth } from "firebase-admin/auth";
+import { getFirestore, Firestore, FieldValue } from "firebase-admin/firestore";
 
 let adminApp: App | null = null;
+let adminDb: Firestore | null = null;
 
 /**
  * Get or initialize Firebase Admin app
@@ -60,6 +62,18 @@ export function getAdminAuth(): Auth {
   const app = getAdminApp();
   return getAuth(app);
 }
+
+export function getAdminDb(): Firestore {
+  if (adminDb) {
+    return adminDb;
+  }
+
+  const app = getAdminApp();
+  adminDb = getFirestore(app);
+  return adminDb;
+}
+
+export const AdminFieldValue = FieldValue;
 
 /**
  * Verify if Firebase Admin is properly configured

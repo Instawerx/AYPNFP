@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
 import { sendRejectionNotification } from "@/lib/email";
 import { logFormAction } from "@/lib/audit";
 import { trackFormRejection, calculateProcessingTime } from "@/lib/analytics";
+
+const db = getAdminDb();
 
 export async function POST(
   request: NextRequest,
@@ -31,14 +32,12 @@ export async function POST(
     // TODO: Verify requesting user has forms.approve scope
 
     // Get submission
-    const submissionRef = doc(
-      db,
-      `orgs/${orgId}/formSubmissions`,
-      submissionId
-    );
-    const submissionDoc = await getDoc(submissionRef);
+    const submissionRef = db
+      .collection(`orgs/${orgId}/formSubmissions`)
+      .doc(submissionId);
+    const submissionDoc = await submissionRef.get();
 
-    if (!submissionDoc.exists()) {
+    if (!submissionDoc.exists) {
       return NextResponse.json(
         { error: "Submission not found" },
         { status: 404 }
@@ -46,6 +45,13 @@ export async function POST(
     }
 
     const submissionData = submissionDoc.data();
+
+    if (!submissionData) {
+      return NextResponse.json(
+        { error: "Submission data unavailable" },
+        { status: 500 }
+      );
+    }
 
     // Check if already approved or rejected
     if (submissionData.status === "approved") {
@@ -65,14 +71,14 @@ export async function POST(
     const now = new Date();
 
     // Update submission
-    await updateDoc(submissionRef, {
+    await submissionRef.update({
       status: "rejected",
       "approvals.rejectedBy": rejectedBy,
       "approvals.rejectorName": rejectorName || "Unknown",
-      "approvals.rejectedAt": serverTimestamp(),
+      "approvals.rejectedAt": AdminFieldValue.serverTimestamp(),
       "approvals.rejectionReason": reason,
       "approvals.comments": comments || "",
-      "metadata.completedAt": serverTimestamp(),
+      "metadata.completedAt": AdminFieldValue.serverTimestamp(),
     });
 
     // Calculate processing time

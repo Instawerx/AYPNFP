@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
-import { getAdminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb, AdminFieldValue } from "@/lib/firebase-admin";
+
+const db = getAdminDb();
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,9 +29,12 @@ export async function POST(request: NextRequest) {
     // Aggregate scopes from roles
     const scopes: string[] = [];
     for (const roleId of roles) {
-      const roleDoc = await getDoc(doc(db, `orgs/${orgId}/roles`, roleId));
-      if (roleDoc.exists()) {
-        const roleData = roleDoc.data();
+      const roleDoc = await db
+        .collection(`orgs/${orgId}/roles`)
+        .doc(roleId)
+        .get();
+      if (roleDoc.exists) {
+        const roleData = roleDoc.data() || {};
         if (roleData.scopes) {
           scopes.push(...roleData.scopes);
         }
@@ -69,17 +72,17 @@ export async function POST(request: NextRequest) {
 
     // Create user document in Firestore
     try {
-      await setDoc(doc(db, `orgs/${orgId}/users`, userId), {
+      await db.collection(`orgs/${orgId}/users`).doc(userId).set({
         email,
         displayName: displayName || "",
         roles,
         scopes: uniqueScopes,
         status: "active",
-        createdAt: serverTimestamp(),
+        createdAt: AdminFieldValue.serverTimestamp(),
         lastLoginAt: null,
         metadata: {
           invitedBy: "admin", // TODO: Get from auth context
-          invitedAt: serverTimestamp(),
+          invitedAt: AdminFieldValue.serverTimestamp(),
         },
       });
     } catch (error: any) {
