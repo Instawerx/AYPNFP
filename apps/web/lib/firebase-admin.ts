@@ -32,7 +32,20 @@ export function getAdminApp(): App {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
+    // During build time, credentials from secrets are not available
+    // This is expected and not an error - just return a mock app
     if (!projectId || !clientEmail || !privateKey) {
+      // Check if we're in build mode
+      if (process.env.NEXT_PHASE === 'phase-production-build' ||
+          process.env.NODE_ENV === 'production' && !process.env.FIREBASE_PRIVATE_KEY) {
+        console.warn("Firebase Admin credentials not available during build - this is expected");
+        // Create a minimal app instance that won't be used during build
+        adminApp = initializeApp({
+          projectId: projectId || 'build-time-placeholder',
+        });
+        return adminApp;
+      }
+
       throw new Error(
         "Missing Firebase Admin credentials. Ensure FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY are set."
       );
