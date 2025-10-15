@@ -100,4 +100,4 @@ jobs:
         run: |
           gcloud config set project adopt-a-young-parent
           export FIREBASE_TOKEN=$(gcloud auth print-access-token)
-          firebase deploy --only functions,firestore:rules,storage:rules --non-interactive --project adopt-a-young-parent --token "$FIREBASE_TOKEN"
+          firebase deploy --only functions,firestore:rules,storage --non-interactive --project adopt-a-young-parent --token "$FIREBASE_TOKEN"
