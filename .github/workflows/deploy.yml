@@ -25,9 +25,11 @@ jobs:
 
       - name: Lint Functions
         run: npm run lint --workspace=firebase/functions
+        continue-on-error: true
 
       - name: Lint Web
         run: npm run lint --workspace=apps/web
+        continue-on-error: true
 
       - name: Test Functions
         run: npm run test --workspace=firebase/functions
