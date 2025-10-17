@@ -5,11 +5,20 @@ Write-Host "🔐 Firebase Admin SDK Secret Setup" -ForegroundColor Cyan
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Read the service account file
-$serviceAccountPath = "C:\AYPNFP\adopt-a-young-parent-firebase-adminsdk-fbsvc-813342c77d.json"
+# Check for environment variable first
+$serviceAccountPath = $env:FIREBASE_SERVICE_ACCOUNT_PATH
+
+if (-not $serviceAccountPath) {
+    Write-Host "⚠️  FIREBASE_SERVICE_ACCOUNT_PATH environment variable not set" -ForegroundColor Yellow
+    Write-Host "Please provide the path to your Firebase service account JSON file:" -ForegroundColor White
+    $serviceAccountPath = Read-Host "Path"
+}
 
 if (-not (Test-Path $serviceAccountPath)) {
     Write-Host "❌ Error: Service account file not found at: $serviceAccountPath" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "⚠️  SECURITY WARNING: Never commit service account files to Git!" -ForegroundColor Red
+    Write-Host "Store the file outside your repository or use environment variables." -ForegroundColor Yellow
     exit 1
 }
 
